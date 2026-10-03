@@ -236,3 +236,17 @@ export function useOrders(basket: Address | null, refreshKey = 0) {
   }, [basket, refreshKey]);
   return orders;
 }
+
+/** NAV's move over 24 hours, from each holding's move weighted by its value. */
+export function navChange24h(b: BasketInfo, prices: Record<string, Price | null>): number | null {
+  let value = 0;
+  let prior = 0;
+  for (const c of b.components) {
+    const p = c.stock && prices[c.stock.symbol];
+    if (!p || p.change24h == null) return null;
+    const v = tokenAmount(c.unitsPerShare) * p.mid;
+    value += v;
+    prior += v / (1 + p.change24h / 100);
+  }
+  return prior ? (value / prior - 1) * 100 : null;
+}

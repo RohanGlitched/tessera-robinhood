@@ -1,0 +1,108 @@
+"use client";
+
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { parseSchedule, marketState, CLOSED_REASON } from "@/lib/clock";
+import { duration } from "@/lib/format";
+
+/**
+ * Both clocks, always. The exchange's, and the chain's.
+ *
+ * Every Robinhood Stock Token tracks a US listing, so one NYSE schedule covers
+ * all of them.
+ */
+const SCHEDULE = parseSchedule(
+  "America/New_York;0930-1600,0930-1600,0930-1600,0930-1600,0930-1600,C,C;0907/C,1126/C,1127/0930-1300,1224/0930-1300,1225/C,0101/C,0118/C,0215/C,0326/C,0531/C,0618/C,0705/C",
+);
+
+const noSubscribe = () => () => {};
+
+function useTick(ms = 1000) {
+  const [, force] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => force((n) => n + 1), ms);
+    return () => clearInterval(t);
+  }, [ms]);
+}
+
+export function MarketClock({ compact = false }: { compact?: boolean }) {
+  useTick();
+  // Rendered on the client only: the server's clock and the reader's differ, and
+  // a countdown that arrives pre-rendered is a countdown that arrives wrong.
+  const mounted = useSyncExternalStore(
+    noSubscribe,
+    () => true,
+    () => false,
+  );
+  const state = mounted ? marketState(SCHEDULE) : null;
+
+  if (compact) {
+    return (
+      <div className="flex items-center gap-2 text-xs">
+        <span
+          aria-hidden
+          className={`size-1.5 ${state?.open ? "bg-gain pulse" : "bg-ivory-faint"}`}
+          style={{ clipPath: "polygon(50% 0,100% 50%,50% 100%,0 50%)" }}
+        />
+        <span className="text-ivory-dim">
+          {state == null
+            ? " "
+            : state.open
+              ? "NYSE open"
+              : "NYSE closed"}
+        </span>
+        {state?.secondsToFlip != null && (
+          <span className="tnum text-ivory-faint">
+            {duration(state.secondsToFlip)}
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid divide-y divide-rule border border-rule sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+      <div className="p-5">
+        <div className="flex items-baseline justify-between gap-3">
+          <h3 className="text-sm text-ivory-dim">New York Stock Exchange</h3>
+          <span
+            aria-hidden
+            className={`size-2 shrink-0 ${state?.open ? "bg-gain" : "bg-ivory-faint"}`}
+            style={{ clipPath: "polygon(50% 0,100% 50%,50% 100%,0 50%)" }}
+          />
+        </div>
+        <p className="display mt-3 text-3xl text-ivory">
+          {state == null ? " " : state.open ? "Open" : "Closed"}
+        </p>
+        <p className="mt-2 text-sm text-ivory-faint">
+          {state == null ? " " : CLOSED_REASON[state.reason]}
+        </p>
+        {state?.secondsToFlip != null && (
+          <p className="mt-4 text-sm text-ivory-dim">
+            <span className="tnum text-ivory">
+              {duration(state.secondsToFlip)}
+            </span>{" "}
+            until it {state.edge.startsWith("opens") ? "opens" : "closes"}
+          </p>
+        )}
+      </div>
+      <div className="p-5">
+        <div className="flex items-baseline justify-between gap-3">
+          <h3 className="text-sm text-ivory-dim">Robinhood Chain</h3>
+          <span
+            aria-hidden
+            className="size-2 shrink-0 bg-gain pulse"
+            style={{ clipPath: "polygon(50% 0,100% 50%,50% 100%,0 50%)" }}
+          />
+        </div>
+        <p className="display mt-3 text-3xl text-ivory">Open</p>
+        <p className="mt-2 text-sm text-ivory-faint">
+          No session, no holidays, no bell
+        </p>
+        <p className="mt-4 text-sm text-ivory-dim">
+          Mints and redeems in about{" "}
+          <span className="tnum text-ivory">250ms</span>
+        </p>
+      </div>
+    </div>
+  );
+}

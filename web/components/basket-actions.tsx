@@ -10,6 +10,7 @@ import { ensureAllowances } from "@/lib/approvals";
 import { navPerShare, tokenAmount, useBalances, ONE_SHARE, type BasketInfo } from "@/lib/baskets";
 import { money, quantity, percent } from "@/lib/format";
 import { USDG } from "@/lib/tokens";
+import { BrandMark } from "./brand-mark";
 
 type Tab = "mint" | "redeem" | "buy";
 
@@ -169,7 +170,12 @@ export function BasketActions({ basket }: { basket: BasketInfo }) {
                 const low = tab === "mint" && w.address && mine < need[i];
                 return (
                   <tr key={c.token} className="border-t border-rule">
-                    <td className="py-2 text-ivory">{c.stock?.symbol}</td>
+                    <td className="py-2 text-ivory">
+                      <span className="flex items-center gap-2">
+                        <BrandMark symbol={c.stock?.symbol ?? ""} className="size-3.5 text-ivory-dim" />
+                        {c.stock?.symbol}
+                      </span>
+                    </td>
                     <td className="tnum py-2 text-right text-ivory">{quantity(tokenAmount(tab === "mint" ? need[i] : out[i]), 6)}</td>
                     {tab === "mint" && (
                       <td className={`tnum py-2 text-right ${low ? "text-loss" : "text-ivory-dim"}`}>

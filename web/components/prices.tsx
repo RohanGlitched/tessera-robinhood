@@ -10,6 +10,10 @@ export type Price = {
   low: number;
   halted: boolean;
   at: string;
+  /** Percent move over 24 hours, or null when unknown. */
+  change24h: number | null;
+  /** Market capitalisation of the underlying company, in dollars. */
+  mcap: number | null;
 };
 type Prices = Record<string, Price | null>;
 

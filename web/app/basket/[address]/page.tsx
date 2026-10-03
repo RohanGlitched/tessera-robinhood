@@ -10,10 +10,12 @@ import { BasketActions } from "@/components/basket-actions";
 import { OrdersTable } from "@/components/orders-table";
 import { usePrices } from "@/components/prices";
 import { useWallet } from "@/components/wallet";
-import { navPerShare, tokenAmount, useBalances, useBasket, useOrders, vaultValue, ONE_SHARE } from "@/lib/baskets";
+import { navChange24h, navPerShare, tokenAmount, useBalances, useBasket, useOrders, vaultValue, ONE_SHARE } from "@/lib/baskets";
 import { explorerAddress } from "@/lib/chain";
-import { money, moneyCompact, percent, quantity, shortAddress, timeAgo } from "@/lib/format";
-import { slotColor } from "@/lib/palette";
+import { money, moneyCompact, percent, quantity, shortAddress, signedPercent, timeAgo } from "@/lib/format";
+import { slotColor, changeInk } from "@/lib/palette";
+import { BrandMark } from "@/components/brand-mark";
+import { Ticker } from "@/components/ticker";
 
 export default function BasketPage({ params }: { params: Promise<{ address: string }> }) {
   const { address } = use(params);
@@ -45,6 +47,7 @@ export default function BasketPage({ params }: { params: Promise<{ address: stri
   }
 
   const nav = navPerShare(basket, prices);
+  const move = navChange24h(basket, prices);
   const tvl = vaultValue(basket, prices);
   const owed = basket.components.map((c) => (c.unitsPerShare * basket.totalSupply) / ONE_SHARE);
   const coverage = basket.components.map((_, i) => (owed[i] === 0n ? null : Number((basket.vault[i] * 10_000n) / owed[i]) / 100));
@@ -68,16 +71,19 @@ export default function BasketPage({ params }: { params: Promise<{ address: stri
             </p>
             <h1 className="display mt-2 text-hero text-ivory">{basket.name}</h1>
           </div>
-          <dl className="grid w-full grid-cols-2 sm:w-auto gap-x-10 gap-y-4 sm:grid-cols-4">
+          <dl className="grid w-full grid-cols-2 gap-x-10 gap-y-4 sm:w-auto sm:grid-cols-5">
             {[
               ["One share", money(nav)],
+              ["Today", signedPercent(move)],
               ["In the vault", moneyCompact(tvl)],
               ["Shares out", quantity(tokenAmount(basket.totalSupply), 4)],
               ["You hold", w.address ? quantity(tokenAmount(mine), 4) : "—"],
             ].map(([k, v]) => (
               <div key={k}>
                 <dt className="text-xs text-ivory-faint">{k}</dt>
-                <dd className="tnum display mt-1 text-2xl text-ivory">{v}</dd>
+                <dd className="tnum display mt-1 text-2xl text-ivory" style={k === "Today" ? { color: changeInk(move) } : undefined}>
+                  <Ticker value={v} />
+                </dd>
               </div>
             ))}
           </dl>
@@ -86,15 +92,16 @@ export default function BasketPage({ params }: { params: Promise<{ address: stri
 
       <section className="mx-auto mt-10 grid max-w-[1400px] gap-10 px-5 sm:px-8 lg:grid-cols-[1.4fr_1fr]">
         <div className="min-w-0">
-          <BasketMosaic tiles={basketTiles(basket)} height={340} />
+          <BasketMosaic tiles={basketTiles(basket)} height={380} />
           <div className="mt-6 overflow-x-auto">
-            <table className="w-full min-w-[620px] text-sm">
+            <table className="w-full min-w-[680px] text-sm">
               <thead>
                 <tr className="text-left text-xs text-ivory-faint">
                   <th className="pb-2 font-normal">Stock</th>
                   <th className="pb-2 text-right font-normal">Weight</th>
                   <th className="pb-2 text-right font-normal">Per share</th>
                   <th className="pb-2 text-right font-normal">Price</th>
+                  <th className="pb-2 text-right font-normal">24h</th>
                   <th className="pb-2 text-right font-normal">In the vault</th>
                   <th className="pb-2 text-right font-normal">Backing</th>
                 </tr>
@@ -107,6 +114,7 @@ export default function BasketPage({ params }: { params: Promise<{ address: stri
                       <td className="py-2.5">
                         <a href={explorerAddress(c.token)} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-ivory hover:text-gold">
                           <span className="size-2.5" style={{ background: slotColor(i) }} aria-hidden />
+                          <BrandMark symbol={c.stock?.symbol ?? ""} className="size-3.5 text-ivory-dim" />
                           {c.stock?.symbol}
                           <span className="text-ivory-faint">{c.stock?.name}</span>
                         </a>
@@ -114,6 +122,7 @@ export default function BasketPage({ params }: { params: Promise<{ address: stri
                       <td className="tnum py-2.5 text-right text-ivory-dim">{percent(c.weightBps / 100, 2)}</td>
                       <td className="tnum py-2.5 text-right text-ivory-dim">{quantity(tokenAmount(c.unitsPerShare), 6)}</td>
                       <td className="tnum py-2.5 text-right text-ivory-dim">{p ? money(p.mid) : "—"}</td>
+                      <td className="tnum py-2.5 text-right" style={{ color: changeInk(p?.change24h) }}>{p ? signedPercent(p.change24h) : "—"}</td>
                       <td className="tnum py-2.5 text-right text-ivory">{quantity(tokenAmount(basket.vault[i]), 5)}</td>
                       <td className="tnum py-2.5 text-right text-ivory-dim">{coverage[i] === null ? "—" : percent(coverage[i], 2)}</td>
                     </tr>

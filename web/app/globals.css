@@ -272,3 +272,33 @@ input[type="number"] {
   -moz-appearance: textfield;
   font-variant-numeric: tabular-nums;
 }
+
+/* The quote strip under the header drifts left forever; hover holds it still. */
+@keyframes tessera-tape {
+  to {
+    transform: translateX(-25%);
+  }
+}
+.tape-track {
+  animation: tessera-tape 48s linear infinite;
+}
+.tape:hover .tape-track {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tape-track {
+    animation: none;
+  }
+}
+
+/* The flow diagram draws its paths once, on arrival. */
+@keyframes tessera-draw {
+  from {
+    stroke-dashoffset: var(--len, 400);
+  }
+}
+.draw {
+  stroke-dasharray: var(--len, 400);
+  animation: tessera-draw 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: var(--delay, 0ms);
+}

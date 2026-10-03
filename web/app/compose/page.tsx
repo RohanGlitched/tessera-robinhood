@@ -9,8 +9,9 @@ import { useWallet, explain } from "@/components/wallet";
 import { tesseraFactoryAbi } from "@/lib/abi";
 import { DEPLOYMENT, IS_DEPLOYED, publicClient } from "@/lib/chain";
 import { STOCKS } from "@/lib/tokens";
-import { money, percent, quantity } from "@/lib/format";
-import { slotColor } from "@/lib/palette";
+import { money, percent, quantity, signedPercent } from "@/lib/format";
+import { slotColor, changeInk } from "@/lib/palette";
+import { BrandMark } from "@/components/brand-mark";
 
 type Pick = { symbol: string; weightBps: number };
 
@@ -110,21 +111,29 @@ export default function Compose() {
 
         <fieldset className="mt-10">
           <legend className="text-sm text-ivory">Stocks</legend>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5">
             {STOCKS.map((s) => {
               const on = picks.some((p) => p.symbol === s.symbol);
+              const p = prices[s.symbol];
               return (
                 <button
                   key={s.symbol}
                   id={`pick-${s.symbol}`}
                   onClick={() => toggle(s.symbol)}
                   aria-pressed={on}
-                  className={`border px-4 py-2 text-sm transition-colors ${
-                    on ? "border-gold bg-ground-raised text-ivory" : "border-rule-bright text-ivory-dim hover:text-ivory"
+                  className={`relative border p-3 text-left transition-colors ${
+                    on ? "border-gold bg-ground-raised" : "border-rule-bright hover:border-ivory-faint"
                   }`}
                 >
-                  {s.symbol}
-                  <span className="tnum ml-2 text-ivory-faint">{money(prices[s.symbol]?.mid)}</span>
+                  <span className="flex items-center justify-between">
+                    <span className="text-sm text-ivory">{s.symbol}</span>
+                    <BrandMark symbol={s.symbol} className={`size-4 ${on ? "text-gold" : "text-ivory-faint"}`} />
+                  </span>
+                  <span className="tnum mt-2 block text-[15px] text-ivory">{money(p?.mid)}</span>
+                  <span className="tnum block text-xs" style={{ color: changeInk(p?.change24h) }}>
+                    {p ? signedPercent(p.change24h) : " "}
+                  </span>
+                  {on && <span className="absolute inset-x-0 top-0 h-0.5 bg-gold" aria-hidden />}
                 </button>
               );
             })}
@@ -217,7 +226,7 @@ export default function Compose() {
           <div className="mt-5">
             <BasketMosaic
               tiles={picks.map((p, i) => ({ key: p.symbol, label: p.symbol, sub: STOCKS.find((s) => s.symbol === p.symbol)?.name, weightBps: p.weightBps, slot: i }))}
-              height={260}
+              height={300}
               emptyHint="Pick a stock to lay the first tile."
             />
           </div>

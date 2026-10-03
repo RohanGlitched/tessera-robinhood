@@ -1,0 +1,274 @@
+@import "tailwindcss";
+
+/*
+  Tessera's surfaces are a deep lapis, the ground of a Byzantine mosaic, with
+  limestone-ivory type over it. Data colours live in lib/palette.ts and are
+  validated by scripts/build-palette.mjs — never hand-pick a chart colour here.
+*/
+@theme {
+  --color-ground: #0f1b33;
+  --color-ground-deep: #0a1224;
+  --color-ground-raised: #16233d;
+  --color-ground-high: #1d2c4a;
+
+  --color-ivory: #ede6d6;
+  --color-ivory-dim: #b3ab9c;
+  --color-ivory-faint: #888c9c;
+
+  --color-rule: #24314e;
+  --color-rule-bright: #35446a;
+
+  --color-gold: #b18827;
+
+  --color-gain: #05aa9e;
+  --color-loss: #e46a49;
+  --color-flat: #616367;
+
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-sans: var(--font-archivo), system-ui, sans-serif;
+
+  --text-hero: clamp(2.75rem, 7vw, 6rem);
+  --text-title: clamp(1.75rem, 3.2vw, 2.75rem);
+}
+
+html {
+  background: var(--color-ground-deep);
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-ground-deep);
+  color: var(--color-ivory);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv05" 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Every figure in the product is tabular, so columns of numbers line up and a
+   changing price never shifts the layout under the reader's eye. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+}
+
+/* A hairline that reads as inlaid grout rather than a border. */
+.grout {
+  border-color: var(--color-rule);
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-gold) 45%, transparent);
+  color: var(--color-ivory);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+  border-radius: 1px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Things settle into place once; only the market clock and live markers keep
+   moving, because a clock that does not move is broken and a live dot that
+   does not breathe looks dead. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+@keyframes tessera-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.pulse {
+  animation: tessera-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes tessera-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+/* First paint: the hero settles in line by line. */
+.rise {
+  animation: tessera-rise 640ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+
+/* Sections below the fold rise as they scroll into view, where the browser can
+   drive it from the scroll position; elsewhere they are simply there. */
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: tessera-rise 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 30%;
+  }
+}
+
+@keyframes tessera-ping {
+  to {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
+.live-dot {
+  position: relative;
+}
+.live-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  animation: tessera-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.lift {
+  transition:
+    transform 220ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    border-color 160ms ease-out,
+    box-shadow 220ms ease-out;
+}
+.lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px -20px rgb(0 0 0 / 0.7);
+}
+
+button:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+@keyframes tessera-tile-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.mosaic-tile {
+  animation: tessera-tile-in 520ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.mosaic-tile > rect,
+.mosaic-tile > text {
+  transition:
+    x 360ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    y 360ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    width 360ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    height 360ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    opacity 140ms ease-out;
+}
+
+/* Thin scrollbars so dense tables do not gain a heavy chrome edge. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-rule-bright) transparent;
+}
+
+@keyframes tessera-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+      90deg,
+      var(--color-ground-raised) 30%,
+      var(--color-ground-high) 50%,
+      var(--color-ground-raised) 70%
+    )
+    0 0 / 200% 100%;
+  animation: tessera-shimmer 1.6s linear infinite;
+}
+
+/* Native sliders pick their empty track from the accent's lightness, so dark
+   accents got a white track. Draw both halves explicitly instead. */
+.slider {
+  appearance: none;
+  height: 18px;
+  background: transparent;
+  cursor: pointer;
+}
+.slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    var(--fill) var(--filled),
+    var(--color-rule-bright) var(--filled)
+  );
+}
+.slider::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-rule-bright);
+}
+.slider::-moz-range-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--fill);
+}
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  margin-top: -6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--color-ground-deep);
+  background: var(--fill);
+}
+.slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--color-ground-deep);
+  background: var(--fill);
+}
+.slider:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 3px;
+}
+.slider:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* Number inputs carry tabular figures and drop the browser spinners, which
+   read as chrome rather than as part of the form. */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  font-variant-numeric: tabular-nums;
+}

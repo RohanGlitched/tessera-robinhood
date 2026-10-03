@@ -1,0 +1,23 @@
+{
+  "chainId": 46630,
+  "factory": "0xaeF91E3De7a4b96063EB6Fe89890dc8339aB7676",
+  "desk": "0xf17DDb38765e74D1130330ac600bD6BE9CFb68ab",
+  "usdg": "0x915Ef7c9F9f80a69e3BE47A38EE0Bb47607103ec",
+  "startBlock": 128145466,
+  "deployer": "0x59d3E1239708a1CDD6Ef876688B3cd69d4aB0285",
+  "baskets": [
+    {
+      "symbol": "HOOD5",
+      "address": "0x41F51f70CA5A5AbC09E2670f31540642a780b55d"
+    },
+    {
+      "symbol": "CHIPS",
+      "address": "0x2099BD68d14e45624E6eB5Bdf4e0f30350Feb090"
+    },
+    {
+      "symbol": "PRIME",
+      "address": "0xbd7dA0a7c87f28816656e3a9D073C0bC61870a5A"
+    }
+  ],
+  "deployedAt": "2026-10-03T12:18:06.039Z"
+}

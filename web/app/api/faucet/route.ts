@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic";
  */
 const GAS = parseEther(process.env.FAUCET_GAS_ETH ?? "0.0004");
 const STOCK = parseEther("0.1");
-const CASH = parseUnits("40", USDG.decimals);
+const CASH = parseUnits("15", USDG.decimals);
 
 // Per-instance memory. Good enough to stop a double click; the on-chain balance
 // check below is what actually stops a wallet coming back for more.

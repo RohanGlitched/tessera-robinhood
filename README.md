@@ -48,7 +48,7 @@ Three small Solidity contracts (`contracts/contracts`):
 ## Robinhood Chain integration
 
 - **Robinhood Stock Tokens** on testnet: TSLA, AMZN, AMD, PLTR, NFLX (`web/lib/tokens.ts`).
-- **Paxos USDG** (testnet `0x915E…03ec`, 6 decimals) settles every creation-desk order.
+- **Paxos USDG** (testnet `0x7E95…802F`, 6 decimals) settles every creation-desk order.
 - **Robinhood Stock Token API** (`api.robinhood.com/rhj/prices`) for live NAV, proxied and cached for
   15 seconds by `web/app/api/prices`.
 - Deployed with Hardhat to Robinhood Chain testnet (an Arbitrum Orbit chain), verified on its

@@ -7,7 +7,7 @@ const TOKENS = {
   PLTR: { address: "0x1FBE1a0e43594b3455993B5dE5Fd0A7A266298d0", name: "Palantir" },
   NFLX: { address: "0x3b8262A63d25f0477c4DDE23F83cfe22Cb768C93", name: "Netflix" },
 };
-const USDG = "0x915Ef7c9F9f80a69e3BE47A38EE0Bb47607103ec";
+const USDG = "0x7E955252E15c84f5768B83c41a71F9eba181802F";
 
 // Each seed basket targets a $10 net asset value per share at today's prices.
 const SHARE_NAV_USD = 10;

@@ -54,7 +54,7 @@ export const STOCKS: Stock[] = [
 export const USDG = {
   symbol: "USDG",
   name: "Global Dollar (Paxos)",
-  address: "0x915Ef7c9F9f80a69e3BE47A38EE0Bb47607103ec" as Address,
+  address: "0x7E955252E15c84f5768B83c41a71F9eba181802F" as Address,
   decimals: 6,
 };
 

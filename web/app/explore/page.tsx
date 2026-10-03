@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { BasketCard } from "@/components/basket-card";
 import { usePrices } from "@/components/prices";
-import { useBaskets, vaultValue } from "@/lib/baskets";
+import { featuredOrder, useBaskets, vaultValue } from "@/lib/baskets";
 import { moneyCompact } from "@/lib/format";
 
 export default function Explore() {
@@ -37,7 +37,9 @@ export default function Explore() {
       {error && <p className="mt-8 border border-loss/40 p-4 text-sm text-ivory">Could not read the factory: {error}</p>}
       <div className="mt-10 grid gap-5 border-t border-rule pt-10 sm:grid-cols-2 lg:grid-cols-3">
         {baskets
-          ? baskets.map((b) => <BasketCard key={b.address} basket={b} />)
+          ? featuredOrder(baskets, prices)
+              
+              .map((b) => <BasketCard key={b.address} basket={b} />)
           : Array.from({ length: 6 }, (_, i) => <div key={i} className="skeleton h-[270px] border border-rule" />)}
       </div>
       {baskets && baskets.length === 0 && (

@@ -30,12 +30,10 @@ export type BasketInfo = {
 
 export const ONE_SHARE = 10n ** 18n;
 
-async function loadBasket(address: Address): Promise<BasketInfo> {
+const FIELDS = 10;
+const basketCalls = (address: Address) => {
   const c = { address, abi: basketAbi } as const;
-  const [name, symbol, creator, feeBps, createdAt, totalSupply, mintCount, redeemCount, comps, vault] =
-    await publicClient.multicall({
-      allowFailure: false,
-      contracts: [
+  return [
         { ...c, functionName: "name" },
         { ...c, functionName: "symbol" },
         { ...c, functionName: "creator" },
@@ -46,8 +44,12 @@ async function loadBasket(address: Address): Promise<BasketInfo> {
         { ...c, functionName: "redeemCount" },
         { ...c, functionName: "components" },
         { ...c, functionName: "vaultBalances" },
-      ],
-    });
+  ] as const;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toBasket(address: Address, r: readonly any[]): BasketInfo {
+  const [name, symbol, creator, feeBps, createdAt, totalSupply, mintCount, redeemCount, comps, vault] = r;
   return {
     address,
     name,
@@ -58,7 +60,8 @@ async function loadBasket(address: Address): Promise<BasketInfo> {
     totalSupply,
     mintCount: Number(mintCount),
     redeemCount: Number(redeemCount),
-    components: comps.map((x) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    components: comps.map((x: any) => ({
       token: x.token,
       unitsPerShare: x.unitsPerShare,
       weightBps: Number(x.weightBps),
@@ -67,6 +70,18 @@ async function loadBasket(address: Address): Promise<BasketInfo> {
     vault: [...vault],
   };
 }
+
+/** Every field of every basket in one multicall round trip. */
+async function loadBaskets(addresses: readonly Address[]): Promise<BasketInfo[]> {
+  if (!addresses.length) return [];
+  const r = await publicClient.multicall({
+    allowFailure: false,
+    contracts: addresses.flatMap((a) => basketCalls(a)),
+  });
+  return addresses.map((a, i) => toBasket(a, r.slice(i * FIELDS, (i + 1) * FIELDS)));
+}
+
+const loadBasket = async (address: Address) => (await loadBaskets([address]))[0];
 
 /** Every basket the factory has published, newest first. */
 export function useBaskets(refreshKey = 0) {
@@ -87,7 +102,7 @@ export function useBaskets(refreshKey = 0) {
           abi: tesseraFactoryAbi,
           functionName: "allBaskets",
         });
-        const baskets = await Promise.all([...list].reverse().map(loadBasket));
+        const baskets = await loadBaskets([...list].reverse());
         if (alive) setState({ baskets, error: null });
       } catch (e) {
         if (alive) setState({ baskets: null, error: (e as Error).message });
@@ -249,4 +264,19 @@ export function navChange24h(b: BasketInfo, prices: Record<string, Price | null>
     prior += v / (1 + p.change24h / 100);
   }
   return prior ? (value / prior - 1) * 100 : null;
+}
+
+/** Seed baskets first, in the order they were published, then by value held. */
+export function featuredOrder(list: BasketInfo[], prices: Record<string, Price | null>): BasketInfo[] {
+  const seeds = DEPLOYMENT.baskets.map((b) => b.address.toLowerCase());
+  const rank = (b: BasketInfo) => {
+    const i = seeds.indexOf(b.address.toLowerCase());
+    return i === -1 ? seeds.length : i;
+  };
+  return [...list].sort(
+    (x, y) =>
+      rank(x) - rank(y) ||
+      (vaultValue(y, prices) ?? 0) - (vaultValue(x, prices) ?? 0) ||
+      y.createdAt - x.createdAt,
+  );
 }

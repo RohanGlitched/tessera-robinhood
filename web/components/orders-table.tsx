@@ -76,7 +76,54 @@ export function OrdersTable({
   return (
     <div>
       {error && <p className="mb-3 text-sm text-loss">{error}</p>}
-      <div className="overflow-x-auto border border-rule">
+      <ul className="space-y-3 sm:hidden">
+        {orders.map((o) => {
+          const b = baskets[o.basket.toLowerCase()];
+          const shares = tokenAmount(o.shares);
+          const usdg = tokenAmount(o.usdgAmount, USDG.decimals);
+          const expired = o.status === 1 && now > o.expiry;
+          const mine = w.address && o.buyer.toLowerCase() === w.address.toLowerCase();
+          const open = o.status === 1 && !expired;
+          return (
+            <li key={o.id} className="border border-rule bg-ground p-4">
+              <div className="flex items-baseline justify-between">
+                <Link href={`/basket/${o.basket}`} className="display text-xl text-ivory">
+                  {b ? `$${b.symbol}` : shortAddress(o.basket)}
+                </Link>
+                <span className={`text-sm ${open ? "text-gain" : "text-ivory-faint"}`}>
+                  {expired ? "Expired" : STATUS[o.status]}
+                </span>
+              </div>
+              <p className="tnum mt-2 text-sm text-ivory">
+                {quantity(shares, 4)} shares for {quantity(usdg, 2)} USDG
+                <span className="text-ivory-faint"> · {money(usdg / shares)} each</span>
+              </p>
+              <p className="tnum mt-1 text-xs text-ivory-faint">
+                #{o.id} by {shortAddress(o.buyer, 6, 4)}
+                {open ? ` · expires ${timeAgo(o.expiry)}` : ""}
+                {o.status === 2 ? ` · filled by ${shortAddress(o.filler, 6, 4)}` : ""}
+              </p>
+              {busy?.id === o.id ? (
+                <p className="mt-3 text-xs text-ivory-dim">{busy.step}…</p>
+              ) : o.status === 1 ? (
+                <div className="mt-3 flex gap-2">
+                  {!expired && !mine && (
+                    <button onClick={() => fill(o)} className="flex-1 bg-gold px-3 py-2.5 text-sm font-medium text-ground-deep">
+                      Fill with stocks
+                    </button>
+                  )}
+                  {(mine || expired) && (
+                    <button onClick={() => cancel(o)} className="flex-1 border border-rule-bright px-3 py-2.5 text-sm text-ivory-dim">
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+      <div className="hidden overflow-x-auto border border-rule sm:block">
         <table className="w-full min-w-[720px] text-sm">
           <thead>
             <tr className="text-left text-xs text-ivory-faint">

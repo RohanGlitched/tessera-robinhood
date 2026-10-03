@@ -7,7 +7,7 @@ import { MarketClock } from "@/components/market-clock";
 import { FlowDiagram } from "@/components/flow-diagram";
 import { usePrices } from "@/components/prices";
 import { Ticker } from "@/components/ticker";
-import { useBaskets, vaultValue } from "@/lib/baskets";
+import { featuredOrder, useBaskets, vaultValue } from "@/lib/baskets";
 import { moneyCompact } from "@/lib/format";
 
 const rise = (i: number) => ({ "--i": i }) as React.CSSProperties;
@@ -74,7 +74,11 @@ export default function Home() {
         </div>
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {baskets
-            ? baskets.slice(0, 6).map((b) => <BasketCard key={b.address} basket={b} />)
+            ? featuredOrder(baskets, prices)
+                .filter((b) => b.totalSupply > 0n)
+                
+                .slice(0, 3)
+                .map((b) => <BasketCard key={b.address} basket={b} />)
             : Array.from({ length: 3 }, (_, i) => <div key={i} className="skeleton h-[330px] border border-rule" />)}
         </div>
       </section>

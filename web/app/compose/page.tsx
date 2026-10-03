@@ -111,7 +111,7 @@ export default function Compose() {
 
         <fieldset className="mt-10">
           <legend className="text-sm text-ivory">Stocks</legend>
-          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5">
+          <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
             {STOCKS.map((s) => {
               const on = picks.some((p) => p.symbol === s.symbol);
               const p = prices[s.symbol];
@@ -121,7 +121,7 @@ export default function Compose() {
                   id={`pick-${s.symbol}`}
                   onClick={() => toggle(s.symbol)}
                   aria-pressed={on}
-                  className={`relative border p-3 text-left transition-colors ${
+                  className={`relative border p-2.5 text-left transition-colors sm:p-3 ${
                     on ? "border-gold bg-ground-raised" : "border-rule-bright hover:border-ivory-faint"
                   }`}
                 >

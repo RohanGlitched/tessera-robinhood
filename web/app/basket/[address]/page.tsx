@@ -71,7 +71,7 @@ export default function BasketPage({ params }: { params: Promise<{ address: stri
             </p>
             <h1 className="display mt-2 text-hero text-ivory">{basket.name}</h1>
           </div>
-          <dl className="grid w-full grid-cols-2 gap-x-10 gap-y-4 sm:w-auto sm:grid-cols-5">
+          <dl className="grid w-full grid-cols-3 gap-x-6 gap-y-4 sm:w-auto sm:grid-cols-5 sm:gap-x-10">
             {[
               ["One share", money(nav)],
               ["Today", signedPercent(move)],
@@ -81,7 +81,7 @@ export default function BasketPage({ params }: { params: Promise<{ address: stri
             ].map(([k, v]) => (
               <div key={k}>
                 <dt className="text-xs text-ivory-faint">{k}</dt>
-                <dd className="tnum display mt-1 text-2xl text-ivory" style={k === "Today" ? { color: changeInk(move) } : undefined}>
+                <dd className="tnum display mt-1 text-xl text-ivory sm:text-2xl" style={k === "Today" ? { color: changeInk(move) } : undefined}>
                   <Ticker value={v} />
                 </dd>
               </div>
@@ -90,19 +90,26 @@ export default function BasketPage({ params }: { params: Promise<{ address: stri
         </div>
       </section>
 
-      <section className="mx-auto mt-10 grid max-w-[1400px] gap-10 px-5 sm:px-8 lg:grid-cols-[1.4fr_1fr]">
-        <div className="min-w-0">
+      <section className="mx-auto mt-10 grid max-w-[1400px] gap-x-10 gap-y-8 px-5 sm:px-8 lg:grid-cols-[1.4fr_1fr]">
+        <div className="min-w-0 lg:col-start-1 lg:row-start-1">
           <BasketMosaic tiles={basketTiles(basket)} height={380} />
-          <div className="mt-6 overflow-x-auto">
-            <table className="w-full min-w-[680px] text-sm">
+        </div>
+
+        <aside className="min-w-0 lg:sticky lg:top-32 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">
+          <BasketActions basket={basket} />
+        </aside>
+
+        <div className="min-w-0 lg:col-start-1 lg:row-start-2">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm sm:min-w-[680px]">
               <thead>
                 <tr className="text-left text-xs text-ivory-faint">
                   <th className="pb-2 font-normal">Stock</th>
                   <th className="pb-2 text-right font-normal">Weight</th>
-                  <th className="pb-2 text-right font-normal">Per share</th>
-                  <th className="pb-2 text-right font-normal">Price</th>
+                  <th className="hidden pb-2 text-right font-normal sm:table-cell">Per share</th>
+                  <th className="hidden pb-2 text-right font-normal sm:table-cell">Price</th>
                   <th className="pb-2 text-right font-normal">24h</th>
-                  <th className="pb-2 text-right font-normal">In the vault</th>
+                  <th className="hidden pb-2 text-right font-normal sm:table-cell">In the vault</th>
                   <th className="pb-2 text-right font-normal">Backing</th>
                 </tr>
               </thead>
@@ -116,14 +123,14 @@ export default function BasketPage({ params }: { params: Promise<{ address: stri
                           <span className="size-2.5" style={{ background: slotColor(i) }} aria-hidden />
                           <BrandMark symbol={c.stock?.symbol ?? ""} className="size-3.5 text-ivory-dim" />
                           {c.stock?.symbol}
-                          <span className="text-ivory-faint">{c.stock?.name}</span>
+                          <span className="hidden text-ivory-faint sm:inline">{c.stock?.name}</span>
                         </a>
                       </td>
                       <td className="tnum py-2.5 text-right text-ivory-dim">{percent(c.weightBps / 100, 2)}</td>
-                      <td className="tnum py-2.5 text-right text-ivory-dim">{quantity(tokenAmount(c.unitsPerShare), 6)}</td>
-                      <td className="tnum py-2.5 text-right text-ivory-dim">{p ? money(p.mid) : "—"}</td>
+                      <td className="tnum hidden py-2.5 text-right text-ivory-dim sm:table-cell">{quantity(tokenAmount(c.unitsPerShare), 6)}</td>
+                      <td className="tnum hidden py-2.5 text-right text-ivory-dim sm:table-cell">{p ? money(p.mid) : "—"}</td>
                       <td className="tnum py-2.5 text-right" style={{ color: changeInk(p?.change24h) }}>{p ? signedPercent(p.change24h) : "—"}</td>
-                      <td className="tnum py-2.5 text-right text-ivory">{quantity(tokenAmount(basket.vault[i]), 5)}</td>
+                      <td className="tnum hidden py-2.5 text-right text-ivory sm:table-cell">{quantity(tokenAmount(basket.vault[i]), 5)}</td>
                       <td className="tnum py-2.5 text-right text-ivory-dim">{coverage[i] === null ? "—" : percent(coverage[i], 2)}</td>
                     </tr>
                   );
@@ -152,10 +159,6 @@ export default function BasketPage({ params }: { params: Promise<{ address: stri
             </a>
           </p>
         </div>
-
-        <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
-          <BasketActions basket={basket} />
-        </aside>
       </section>
 
       <section className="mx-auto mt-16 max-w-[1400px] px-5 sm:px-8">

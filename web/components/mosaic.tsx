@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo } from "react";
+import { useId, useMemo, useRef } from "react";
 import { squarify, fitsTile, fitLabel } from "@/lib/treemap";
 import { CHART_SURFACE } from "@/lib/palette";
 import { useMeasure } from "@/lib/use-measure";
@@ -54,6 +54,10 @@ export function Mosaic({
 }) {
   const { ref, width } = useMeasure<HTMLDivElement>();
   const uid = useId().replace(/:/g, "");
+  const lantern = useRef<HTMLDivElement>(null);
+  // Stones are laid one by one on the first paint only; later relayouts just move.
+  const firstPaint = useRef(true);
+  const laidOnce = useRef(false);
 
   const laid = useMemo(() => {
     if (!width || !tiles.length) return [];
@@ -66,8 +70,26 @@ export function Mosaic({
     ).map((tile) => ({ ...tile, meta: map.get(tile.key)! }));
   }, [tiles, width, height, gap]);
 
+  const staggered = firstPaint.current && !laidOnce.current && laid.length > 0;
+  if (laid.length > 0) {
+    if (laidOnce.current) firstPaint.current = false;
+    laidOnce.current = true;
+  }
+
   return (
-    <div ref={ref} style={{ height }} className="relative">
+    <div
+      ref={ref}
+      style={{ height }}
+      className="mosaic-floor relative"
+      onMouseMove={(e) => {
+        const el = lantern.current;
+        if (!el) return;
+        const r = e.currentTarget.getBoundingClientRect();
+        el.style.setProperty("--mx", `${e.clientX - r.left}px`);
+        el.style.setProperty("--my", `${e.clientY - r.top}px`);
+      }}
+    >
+      <div ref={lantern} className="mosaic-lantern" aria-hidden />
       {tiles.length === 0 ? (
         <div
           className="flex h-full items-center justify-center border border-dashed border-rule-bright/60"
@@ -89,8 +111,9 @@ export function Mosaic({
                 <stop offset="1" stopColor="#000" stopOpacity="0.14" />
               </linearGradient>
             </defs>
-            {laid.map((tile) => {
+            {laid.map((tile, order) => {
               const m = tile.meta;
+              const lay = staggered ? ({ animationDelay: `${order * 70}ms` } as React.CSSProperties) : undefined;
               const ink = inkFor(m.color);
               const big = Math.min(34, Math.max(16, Math.min(tile.width, tile.height) / 4.2));
               // Narrow tiles keep their ticker at a smaller size before giving up on it.
@@ -110,7 +133,7 @@ export function Mosaic({
                 !!label && !!m.mark && !!BRAND_PATHS[m.mark] && tile.height > 54 &&
                 tile.width >= labelInset + label.length * labelSize * 0.68 + 16 + markSize + 12;
               const body = (
-                <g className="mosaic-tile" style={{ cursor: onTile || m.href ? "pointer" : "default" }} onClick={onTile ? () => onTile(m.key) : undefined}>
+                <g className={`mosaic-tile${staggered ? " lay" : ""}`} style={{ cursor: onTile || m.href ? "pointer" : "default", ...lay }} onClick={onTile ? () => onTile(m.key) : undefined}>
                   <title>{[m.label, m.figure, m.sub].filter(Boolean).join(" · ")}</title>
                   <rect x={tile.x} y={tile.y} width={tile.width} height={tile.height} fill={m.color} />
                   <rect x={tile.x} y={tile.y} width={tile.width} height={tile.height} fill="#fff" opacity="0.07" filter={`url(#grain-${uid})`} style={{ mixBlendMode: "overlay" }} />

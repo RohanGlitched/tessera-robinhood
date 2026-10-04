@@ -132,7 +132,18 @@ export default function BasketPage({ params }: { params: Promise<{ address: stri
                       <td className="tnum hidden py-2.5 text-right text-ivory-dim sm:table-cell">{p ? money(p.mid) : "—"}</td>
                       <td className="tnum py-2.5 text-right" style={{ color: changeInk(p?.change24h) }}>{p ? signedPercent(p.change24h) : "—"}</td>
                       <td className="tnum hidden py-2.5 text-right text-ivory sm:table-cell">{quantity(tokenAmount(basket.vault[i]), 6)}</td>
-                      <td className="tnum py-2.5 text-right text-ivory-dim">{coverage[i] === null ? "—" : percent(coverage[i], 2)}</td>
+                      <td className="tnum py-2.5 text-right text-ivory-dim">
+                        {coverage[i] === null ? (
+                          "—"
+                        ) : (
+                          <>
+                            {percent(coverage[i], 2)}
+                            <span className="ml-auto mt-1 block h-0.5 w-16 bg-rule" aria-hidden>
+                              <span className="block h-full bg-gain transition-[width] duration-700" style={{ width: `${Math.min(100, coverage[i]!)}%` }} />
+                            </span>
+                          </>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}

@@ -121,7 +121,7 @@ export default function Compose() {
                   id={`pick-${s.symbol}`}
                   onClick={() => toggle(s.symbol)}
                   aria-pressed={on}
-                  className={`relative border p-2.5 text-left transition-colors sm:p-3 ${
+                  className={`relative border p-2.5 text-left transition-[border-color,background-color,transform] duration-200 active:scale-[0.98] sm:p-3 ${
                     on ? "border-gold bg-ground-raised" : "border-rule-bright hover:border-ivory-faint"
                   }`}
                 >
@@ -134,6 +134,9 @@ export default function Compose() {
                     {p ? signedPercent(p.change24h) : " "}
                   </span>
                   {on && <span className="absolute inset-x-0 top-0 h-0.5 bg-gold" aria-hidden />}
+                  {on && (
+                    <span className="absolute bottom-2 right-2 size-2 bg-gold" aria-hidden style={{ boxShadow: "0 0 0 2px var(--color-ground-raised)" }} />
+                  )}
                 </button>
               );
             })}

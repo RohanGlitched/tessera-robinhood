@@ -5,6 +5,10 @@ export type FaucetResult = {
   note: string;
   /** True when the wallet now holds test tokens, whether sent now or already there. */
   funded: boolean;
+  /** What landed just now, e.g. "0.1 TSLA", "15 USDG". */
+  sent: string[];
+  /** What the faucet could not send. */
+  skipped: string[];
 };
 
 /**
@@ -23,7 +27,7 @@ export async function requestTestTokens(address: Address): Promise<FaucetResult>
     error?: string;
   };
   if (r.status === 429) {
-    return { funded: true, note: j.error ?? "This wallet already has test tokens." };
+    return { funded: true, note: j.error ?? "This wallet already has test tokens.", sent: [], skipped: [] };
   }
   if (!r.ok) throw new Error(j.error ?? "The faucet did not answer.");
   const got = (j.sent ?? []).map((s) => s.what).join(", ");
@@ -31,5 +35,7 @@ export async function requestTestTokens(address: Address): Promise<FaucetResult>
   return {
     funded: (j.sent ?? []).length > 0,
     note: got ? `Sent ${got}.${out}` : `Nothing to send.${out}`,
+    sent: (j.sent ?? []).map((s) => s.what),
+    skipped: j.skipped ?? [],
   };
 }

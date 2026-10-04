@@ -10,6 +10,7 @@ import { ensureAllowances } from "@/lib/approvals";
 import { navPerShare, tokenAmount, useBalances, ONE_SHARE, type BasketInfo } from "@/lib/baskets";
 import { money, quantity, percent } from "@/lib/format";
 import { who } from "./orders-table";
+import { LayStrip } from "./lay-strip";
 import { USDG } from "@/lib/tokens";
 import { BrandMark } from "./brand-mark";
 
@@ -44,6 +45,8 @@ export function BasketActions({ basket }: { basket: BasketInfo }) {
   const [result, setResult] = useState<{ ok: boolean; text: string; hash?: string; pending?: boolean } | null>(null);
   /** A USDG order we placed and are watching for a fill. */
   const [watch, setWatch] = useState<{ id: number; shares: bigint; since: number } | null>(null);
+  /** Bumps every time a share is made or unmade, so the frame flares once. */
+  const [flash, setFlash] = useState(0);
 
   const tokens = [...basket.components.map((c) => c.token), basket.address, USDG.address];
   const bal = useBalances(tokens, w.address, w.nonce);
@@ -67,6 +70,7 @@ export function BasketActions({ basket }: { basket: BasketInfo }) {
     try {
       const hash = await fn();
       setResult({ ok: true, text: done, hash });
+      setFlash((f) => f + 1);
     } catch (e) {
       setResult({ ok: false, text: explain(e) });
     } finally {
@@ -149,6 +153,7 @@ export function BasketActions({ basket }: { basket: BasketInfo }) {
         if (!alive) return;
         if (Number(o.status) === 2) {
           setResult({ ok: true, text: deliveredText(o.filler), hash: fillHash });
+          setFlash((f) => f + 1);
           setWatch(null);
           w.refresh();
           // The RPC's read replicas can lag the receipt by a block or two.
@@ -189,9 +194,14 @@ export function BasketActions({ basket }: { basket: BasketInfo }) {
     if (tab === "buy" && !nav) reason = "Waiting for live prices.";
   }
 
+  const tabIndex = tab === "mint" ? 0 : tab === "redeem" ? 1 : 2;
+  const layState = step || watch ? "busy" : result?.ok && !result.pending ? "done" : "idle";
+
   return (
-    <div className="border border-rule bg-ground">
-      <div className="grid grid-cols-3 border-b border-rule" role="tablist">
+    <div className="relative border border-rule bg-ground">
+      {flash > 0 && <span key={flash} className="panel-flash" aria-hidden />}
+      <div className="relative grid grid-cols-3 border-b border-rule" role="tablist" style={{ "--tabs": 3, "--tab": tabIndex } as React.CSSProperties}>
+        <span className="tab-inlay" aria-hidden />
         {(
           [
             ["mint", "Mint in kind"],
@@ -208,15 +218,22 @@ export function BasketActions({ basket }: { basket: BasketInfo }) {
               setTab(t);
               setResult(null);
             }}
-            className={`py-3 text-sm ${tab === t ? "bg-ground-raised text-ivory" : "text-ivory-dim hover:text-ivory"}`}
+            className={`py-3.5 text-sm transition-colors ${tab === t ? "bg-ground-raised text-ivory" : "text-ivory-dim hover:text-ivory"}`}
           >
             {label}
-            {tab === t && <span className="mx-auto mt-1 block h-px w-8 bg-gold" aria-hidden />}
           </button>
         ))}
       </div>
 
       <div className="p-5">
+        <div className="mb-5 border-b border-rule pb-5">
+          <LayStrip
+            symbols={basket.components.map((c) => c.stock?.symbol ?? "?")}
+            symbol={basket.symbol}
+            direction={tab === "redeem" ? "out" : "in"}
+            state={layState}
+          />
+        </div>
         <p className="mb-4 text-xs leading-relaxed text-ivory-faint">{HINTS[tab](basket.components.length)}</p>
         <label className="block">
           <span className="flex justify-between text-sm text-ivory">

@@ -52,6 +52,7 @@ export function WelcomeBanner({ symbol }: { symbol: string }) {
   const w = useWallet();
   const [stage, setStage] = useState<Stage>("wallet");
   const [note, setNote] = useState<string | null>(null);
+  const [landed, setLanded] = useState<{ sent: string[]; skipped: string[] } | null>(null);
   const [hidden, setHidden] = useState(false);
   const asked = useRef<string | null>(null);
 
@@ -64,6 +65,7 @@ export function WelcomeBanner({ symbol }: { symbol: string }) {
       .then((r) => {
         if (!alive) return;
         setNote(r.note);
+        setLanded({ sent: r.sent, skipped: r.skipped });
         setStage(r.funded ? "ready" : "failed");
         w.refresh();
       })
@@ -100,10 +102,29 @@ export function WelcomeBanner({ symbol }: { symbol: string }) {
           <p className="display mt-1.5 text-xl text-ivory sm:text-2xl">{headline}</p>
           <p className="mt-1.5 text-sm text-ivory-dim">
             {stage === "wallet" && "A throwaway key kept only in this browser. Nothing to install."}
-            {stage === "funding" && "Five small transfers on Robinhood Chain. This takes about half a minute."}
-            {stage === "ready" && `${note} Everything below is real: the vault, the shares and the prices.`}
+            {stage === "funding" && "Six small transfers on Robinhood Chain. This takes about half a minute."}
+            {stage === "ready" && (landed?.sent.length ? "Everything below is real: the vault, the shares and the prices." : note)}
             {stage === "failed" && note}
           </p>
+          {(stage === "funding" || (stage === "ready" && landed?.sent.length)) && (
+            <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Test tokens">
+              {(stage === "funding" ? ["ETH for gas", "0.1 TSLA", "0.1 AMZN", "0.1 AMD", "0.1 PLTR", "0.1 NFLX", "USDG"] : landed!.sent).map((what, i) => (
+                <li
+                  key={what}
+                  className={`tnum border px-2 py-1 text-xs ${stage === "funding" ? "skeleton border-rule text-transparent" : "chip-in border-gold/50 bg-ground-raised text-ivory"}`}
+                  style={{ "--i": i } as React.CSSProperties}
+                >
+                  {what}
+                </li>
+              ))}
+              {stage === "ready" &&
+                landed!.skipped.map((what) => (
+                  <li key={what} className="border border-dashed border-rule-bright px-2 py-1 text-xs text-ivory-faint" title="The faucet is out of this for now">
+                    {what} later
+                  </li>
+                ))}
+            </ul>
+          )}
           {stage === "failed" && (
             <button
               onClick={() => {

@@ -16,10 +16,14 @@ import { money, moneyCompact, percent, quantity, shortAddress, signedPercent, ti
 import { slotColor, changeInk } from "@/lib/palette";
 import { BrandMark } from "@/components/brand-mark";
 import { Ticker } from "@/components/ticker";
+import { WelcomeBanner } from "@/components/quick-start";
+import { CreatedBanner } from "@/components/created-banner";
 
 export default function BasketPage({ params }: { params: Promise<{ address: string }> }) {
   const { address } = use(params);
-  const created = useSearchParams().get("created");
+  const search = useSearchParams();
+  const created = search.get("created");
+  const welcome = search.get("welcome");
   const w = useWallet();
   const { prices } = usePrices();
   const { basket, error } = useBasket(address as Address, w.nonce);
@@ -56,11 +60,8 @@ export default function BasketPage({ params }: { params: Promise<{ address: stri
   return (
     <>
       <section className="mx-auto max-w-[1400px] px-5 pt-12 sm:px-8">
-        {created && (
-          <p className="mb-6 border border-gain/40 bg-ground-raised px-4 py-3 text-sm text-ivory">
-            Your basket is live on Robinhood Chain. Mint the first shares below, or share this page.
-          </p>
-        )}
+        {welcome && <WelcomeBanner symbol={basket.symbol} />}
+        {created && <CreatedBanner hash={created.startsWith("0x") ? created : null} />}
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
             <p className="text-sm text-ivory-faint">
@@ -108,7 +109,7 @@ export default function BasketPage({ params }: { params: Promise<{ address: stri
                   <th className="pb-2 text-right font-normal">Weight</th>
                   <th className="hidden pb-2 text-right font-normal sm:table-cell">Per share</th>
                   <th className="hidden pb-2 text-right font-normal sm:table-cell">Price</th>
-                  <th className="pb-2 text-right font-normal">24h</th>
+                  <th className="pb-2 text-right font-normal">Today</th>
                   <th className="hidden pb-2 text-right font-normal sm:table-cell">In the vault</th>
                   <th className="pb-2 text-right font-normal">Backing</th>
                 </tr>
@@ -130,7 +131,7 @@ export default function BasketPage({ params }: { params: Promise<{ address: stri
                       <td className="tnum hidden py-2.5 text-right text-ivory-dim sm:table-cell">{quantity(tokenAmount(c.unitsPerShare), 6)}</td>
                       <td className="tnum hidden py-2.5 text-right text-ivory-dim sm:table-cell">{p ? money(p.mid) : "—"}</td>
                       <td className="tnum py-2.5 text-right" style={{ color: changeInk(p?.change24h) }}>{p ? signedPercent(p.change24h) : "—"}</td>
-                      <td className="tnum hidden py-2.5 text-right text-ivory sm:table-cell">{quantity(tokenAmount(basket.vault[i]), 5)}</td>
+                      <td className="tnum hidden py-2.5 text-right text-ivory sm:table-cell">{quantity(tokenAmount(basket.vault[i]), 6)}</td>
                       <td className="tnum py-2.5 text-right text-ivory-dim">{coverage[i] === null ? "—" : percent(coverage[i], 2)}</td>
                     </tr>
                   );
@@ -141,7 +142,7 @@ export default function BasketPage({ params }: { params: Promise<{ address: stri
           <div className="mt-6 grid gap-px border border-rule bg-rule sm:grid-cols-3">
             {[
               ["Backing", minCoverage === null ? "No shares yet" : `${percent(Math.min(minCoverage, 999.99), 2)} of every share`],
-              ["Mints and redemptions", `${basket.mintCount} and ${basket.redeemCount}`],
+              ["Activity", `${basket.mintCount} ${basket.mintCount === 1 ? "mint" : "mints"} · ${basket.redeemCount} ${basket.redeemCount === 1 ? "redemption" : "redemptions"}`],
               ["Creator fee", `${percent(basket.feeBps / 100, 2)} in new shares`],
             ].map(([k, v]) => (
               <div key={k} className="bg-ground-deep p-4">

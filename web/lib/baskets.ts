@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { erc20Abi, formatUnits, type Address } from "viem";
+import { erc20Abi, formatUnits, isAddress, type Address } from "viem";
 import { basketAbi, tesseraFactoryAbi, creationDeskAbi } from "./abi";
 import { DEPLOYMENT, IS_DEPLOYED, publicClient } from "./chain";
 import { stockByAddress, type Stock } from "./tokens";
@@ -122,9 +122,27 @@ export function useBasket(address: Address, refreshKey = 0) {
   });
   useEffect(() => {
     let alive = true;
-    loadBasket(address)
+    if (!isAddress(address)) {
+      setState({ basket: null, error: "That is not a contract address. A basket page looks like /basket/0x… with 40 hex characters." });
+      return;
+    }
+    publicClient
+      .readContract({ address: DEPLOYMENT.factory, abi: tesseraFactoryAbi, functionName: "isBasket", args: [address] })
+      .then((known) => {
+        if (!known) throw new Error("not a basket");
+        return loadBasket(address);
+      })
       .then((basket) => alive && setState({ basket, error: null }))
-      .catch(() => alive && setState({ basket: null, error: "No Tessera basket lives at this address." }));
+      .catch((e: Error) =>
+        alive &&
+        setState({
+          basket: null,
+          error:
+            e.message === "not a basket"
+              ? "The Tessera factory has not published a basket at this address."
+              : "Robinhood Chain did not answer. Check your connection and try again.",
+        }),
+      );
     return () => {
       alive = false;
     };

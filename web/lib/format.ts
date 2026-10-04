@@ -34,6 +34,7 @@ export function moneyCompact(value: number | null | undefined): string {
   if (value == null || !Number.isFinite(value)) return "—";
   const sign = value < 0 ? "−" : "";
   const v = Math.abs(value);
+  if (v >= 1e12) return `${sign}$${(v / 1e12).toFixed(2)}T`;
   if (v >= 1e9) return `${sign}$${(v / 1e9).toFixed(v / 1e9 >= 10 ? 0 : 1)}B`;
   if (v >= 1e6) return `${sign}$${(v / 1e6).toFixed(v / 1e6 >= 10 ? 0 : 1)}M`;
   if (v >= 1e3) return `${sign}$${(v / 1e3).toFixed(v / 1e3 >= 10 ? 0 : 1)}K`;

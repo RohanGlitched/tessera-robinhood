@@ -68,7 +68,7 @@ export async function POST(req: Request) {
   );
 
   if (eth < GAS / 2n) {
-    sent.push({ what: "ETH", hash: await wallet.sendTransaction({ to, value: GAS, nonce: nonce++ }) });
+    sent.push({ what: "ETH for gas", hash: await wallet.sendTransaction({ to, value: GAS, nonce: nonce++ }) });
   }
   for (let i = 0; i < STOCKS.length; i++) {
     if (held[i] >= STOCK / 2n) continue;
@@ -83,18 +83,22 @@ export async function POST(req: Request) {
       args: [to, STOCK],
       nonce: nonce++,
     });
-    sent.push({ what: STOCKS[i].symbol, hash });
+    sent.push({ what: `0.1 ${STOCKS[i].symbol}`, hash });
   }
   if (cashLow) {
-    if (faucetBalances[STOCKS.length] >= CASH) {
+    // Hand out the full drip while it lasts, then whatever is left down to a
+    // useful minimum. Fills on the creation desk pay USDG back into this wallet.
+    const available = faucetBalances[STOCKS.length];
+    const drip = available >= CASH ? CASH : available >= CASH / 3n ? available : 0n;
+    if (drip > 0n) {
       const hash = await wallet.writeContract({
         address: USDG.address,
         abi: erc20Abi,
         functionName: "transfer",
-        args: [to, CASH],
+        args: [to, drip],
         nonce: nonce++,
       });
-      sent.push({ what: "USDG", hash });
+      sent.push({ what: `${Number(drip) / 10 ** USDG.decimals} USDG`, hash });
     } else skipped.push("USDG");
   }
 

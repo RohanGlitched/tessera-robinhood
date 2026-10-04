@@ -82,7 +82,7 @@ export default function Compose() {
         unitsPerShare: BigInt(Math.round(r.units! * 1e12)) * 10n ** 6n,
         weightBps: r.weightBps,
       }));
-      await w.write({
+      const hash = await w.write({
         address: DEPLOYMENT.factory,
         abi: tesseraFactoryAbi,
         functionName: "createBasket",
@@ -94,14 +94,14 @@ export default function Compose() {
         functionName: "basketOf",
         args: [w.address, keccak256(toBytes(symbol))],
       })) as Address;
-      router.push(`/basket/${addr}?created=1`);
+      router.push(`/basket/${addr}?created=${hash}`);
     } catch (e) {
       setStatus({ busy: false, error: explain(e) });
     }
   }
 
   return (
-    <section className="mx-auto grid max-w-[1400px] gap-12 px-5 pt-14 sm:px-8 lg:grid-cols-[1fr_1fr]">
+    <section className="mx-auto grid max-w-[1400px] gap-12 px-5 pb-24 pt-14 sm:px-8 lg:grid-cols-[1fr_1fr] lg:pb-0">
       <div className="min-w-0">
         <h1 className="display text-title text-ivory">Compose a basket</h1>
         <p className="mt-3 max-w-[56ch] text-ivory-dim">
@@ -272,6 +272,22 @@ export default function Compose() {
           </p>
         </div>
       </aside>
+
+      <div className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-rule bg-ground-deep/95 px-5 py-3 backdrop-blur-md lg:hidden">
+        <div className="min-w-0">
+          <p className="truncate text-sm text-ivory">{name || "Untitled"} <span className="text-ivory-faint">${symbol || "—"}</span></p>
+          <p className={`tnum text-xs ${total === 10_000 ? "text-ivory-faint" : "text-loss"}`}>
+            {picks.length} {picks.length === 1 ? "stock" : "stocks"} · weights {percent(total / 100, 0)} · {money(target)} a share
+          </p>
+        </div>
+        <button
+          onClick={create}
+          disabled={status.busy || problems.length > 0 || !ready || !IS_DEPLOYED}
+          className="shrink-0 bg-gold px-4 py-3 text-sm font-medium text-ground-deep disabled:opacity-50"
+        >
+          {status.busy ? "Publishing…" : w.address ? "Publish" : "Publish with a test wallet"}
+        </button>
+      </div>
     </section>
   );
 }

@@ -5,6 +5,7 @@ import { formatEther } from "viem";
 import { useWallet } from "./wallet";
 import { publicClient, explorerAddress } from "@/lib/chain";
 import { shortAddress } from "@/lib/format";
+import { requestTestTokens } from "@/lib/faucet";
 
 /**
  * One button for the whole wallet story. A judge with no wallet installed can
@@ -35,20 +36,8 @@ export function ConnectButton() {
     if (!w.address) return;
     setFaucet({ busy: true, note: null });
     try {
-      const r = await fetch("/api/faucet", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ address: w.address }),
-      });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.error);
-      const got = (j.sent as { what: string }[]).map((s) => s.what).join(", ");
-      setFaucet({
-        busy: false,
-        note: got
-          ? `Sent ${got}.${j.skipped.length ? ` The faucet is out of ${j.skipped.join(", ")} for now.` : ""}`
-          : "Nothing to send.",
-      });
+      const r = await requestTestTokens(w.address);
+      setFaucet({ busy: false, note: r.note });
       w.refresh();
     } catch (e) {
       setFaucet({ busy: false, note: (e as Error).message });
@@ -60,7 +49,7 @@ export function ConnectButton() {
       <div className="relative" ref={box}>
         <button
           onClick={() => setOpen((o) => !o)}
-          className="border border-gold/70 bg-ground-raised px-4 py-2 text-sm text-ivory transition-colors hover:border-gold"
+          className="border border-gold/70 bg-ground-raised px-4 py-2.5 text-sm text-ivory transition-colors hover:border-gold"
           aria-expanded={open}
         >
           {w.connecting ? "Connecting…" : "Connect wallet"}
@@ -104,7 +93,7 @@ export function ConnectButton() {
     <div className="relative" ref={box}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 border border-rule-bright bg-ground-raised px-3 py-2 text-sm text-ivory hover:border-ivory-faint"
+        className="flex items-center gap-2 border border-rule-bright bg-ground-raised px-3 py-2.5 text-sm text-ivory hover:border-ivory-faint"
         aria-expanded={open}
       >
         <span className="live-dot size-1.5 rounded-full bg-gain" aria-hidden />

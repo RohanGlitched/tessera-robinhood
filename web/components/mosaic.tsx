@@ -93,7 +93,11 @@ export function Mosaic({
               const m = tile.meta;
               const ink = inkFor(m.color);
               const big = Math.min(34, Math.max(16, Math.min(tile.width, tile.height) / 4.2));
-              const label = tile.height > 30 ? fitLabel(m.label, 15, tile.width, 14) : null;
+              // Narrow tiles keep their ticker at a smaller size before giving up on it.
+              const wide = tile.height > 30 ? fitLabel(m.label, 15, tile.width, 14) : null;
+              const labelSize = wide ? 15 : 11;
+              const labelInset = wide ? 14 : 8;
+              const label = wide ?? (tile.height > 30 ? fitLabel(m.label, 11, tile.width, 8) : null);
               const figure =
                 label && m.figure && tile.height > big + 46 && fitsTile(m.figure, big * 0.86, tile.width, 14)
                   ? m.figure
@@ -104,7 +108,7 @@ export function Mosaic({
               // The mark sits right of the ticker and only where both fit with room between.
               const showMark =
                 !!label && !!m.mark && !!BRAND_PATHS[m.mark] && tile.height > 54 &&
-                tile.width >= 14 + label.length * 15 * 0.68 + 16 + markSize + 12;
+                tile.width >= labelInset + label.length * labelSize * 0.68 + 16 + markSize + 12;
               const body = (
                 <g className="mosaic-tile" style={{ cursor: onTile || m.href ? "pointer" : "default" }} onClick={onTile ? () => onTile(m.key) : undefined}>
                   <title>{[m.label, m.figure, m.sub].filter(Boolean).join(" · ")}</title>
@@ -113,7 +117,7 @@ export function Mosaic({
                   <rect x={tile.x} y={tile.y} width={tile.width} height={tile.height} fill={`url(#shade-${uid})`} />
                   <rect x={tile.x} y={tile.y} width={tile.width} height={1} fill="#fff" opacity="0.28" />
                   {label && (
-                    <text x={tile.x + 14} y={tile.y + 25} fill={ink} fontSize={15} fontWeight={600} letterSpacing="0.02em" pointerEvents="none">
+                    <text x={tile.x + labelInset} y={tile.y + 10 + labelSize} fill={ink} fontSize={labelSize} fontWeight={600} letterSpacing="0.02em" pointerEvents="none">
                       {label}
                     </text>
                   )}

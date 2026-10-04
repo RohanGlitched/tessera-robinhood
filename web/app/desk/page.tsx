@@ -19,7 +19,13 @@ export default function Desk() {
         how an ETF&apos;s authorised participants work, open to everyone and settled on Robinhood
         Chain.
       </p>
-      <p className="tnum mt-6 text-sm text-ivory-faint">{open} open {open === 1 ? "order" : "orders"}</p>
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <p className="tnum text-sm text-ivory-faint">{open} open {open === 1 ? "order" : "orders"}</p>
+        <p className="flex items-center gap-2 text-xs text-ivory-faint">
+          <span className="live-dot size-1.5 rounded-full bg-gold" aria-hidden />
+          A house participant watches this desk and fills orders that pay fair value, usually within a minute.
+        </p>
+      </div>
       <div className="mt-4">
         <OrdersTable orders={baskets ? orders : null} baskets={map} emptyText="No orders yet. Open any basket and use Buy with USDG." />
       </div>

@@ -1,14 +1,14 @@
 {
-  "name": "contracts",
+  "name": "tessera-contracts",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Tessera basket vault, factory and USDG creation desk for Robinhood Chain",
+  "private": true,
+  "license": "MIT",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "coverage": "hardhat coverage"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.1.2",
     "@nomicfoundation/hardhat-ethers": "^3.1.3",

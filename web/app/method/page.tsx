@@ -28,6 +28,10 @@ const RULES = [
     "Cash creations through USDG",
     "The creation desk lets someone with only USDG buy a basket. They escrow USDG; anyone holding the stocks fills the order, the vault mints the shares to the buyer, and the filler is paid. The buyer can cancel for a full refund at any time, and anyone can return expired escrow.",
   ],
+  [
+    "Anyone can be the participant",
+    "Filling an order is permissionless: the desk pulls the stocks from whoever calls fill, mints to the buyer and pays the filler the escrowed USDG, so the premium goes to whoever delivers first. On the testnet a house participant run by the project does this within a minute, pricing each order against live Robinhood quotes. It has no special rights on chain.",
+  ],
 ];
 
 export default function Method() {

@@ -1,25 +1,35 @@
 "use client";
 
-import { useState } from "react";
-import { parseUnits, type Abi } from "viem";
+import { useEffect, useState } from "react";
+import { parseEventLogs, parseUnits, type Abi } from "viem";
 import { useWallet, explain } from "./wallet";
 import { usePrices } from "./prices";
 import { basketAbi, creationDeskAbi } from "@/lib/abi";
-import { DEPLOYMENT, explorerTx } from "@/lib/chain";
+import { DEPLOYMENT, explorerTx, publicClient } from "@/lib/chain";
 import { ensureAllowances } from "@/lib/approvals";
 import { navPerShare, tokenAmount, useBalances, ONE_SHARE, type BasketInfo } from "@/lib/baskets";
 import { money, quantity, percent } from "@/lib/format";
+import { who } from "./orders-table";
 import { USDG } from "@/lib/tokens";
 import { BrandMark } from "./brand-mark";
 
 type Tab = "mint" | "redeem" | "buy";
 
+/** Shares as raw units; anything that is not a positive plain decimal is zero. */
 const toShares = (v: string) => {
+  if (!/^\d*\.?\d*$/.test(v.trim())) return 0n;
   try {
-    return parseUnits((v || "0") as `${number}`, 18);
+    const n = parseUnits((v.trim() || "0") as `${number}`, 18);
+    return n > 0n ? n : 0n;
   } catch {
     return 0n;
   }
+};
+
+const HINTS: Record<Tab, (n: number) => string> = {
+  mint: (n) => `Deposit the ${n} ${n === 1 ? "stock" : "stocks"} the recipe names and receive shares. No cash and no price is involved: that is what "in kind" means.`,
+  redeem: () => "Burn shares and take the stocks back out of the vault, in proportion to what you burn.",
+  buy: () => "Pay in USDG, Paxos's dollar stablecoin. It waits in escrow until someone holding the stocks delivers them for a small premium, the way an ETF's authorised participants work.",
 };
 
 const ceilDiv = (a: bigint, b: bigint) => (a + b - 1n) / b;
@@ -31,7 +41,9 @@ export function BasketActions({ basket }: { basket: BasketInfo }) {
   const [amount, setAmount] = useState("1");
   const [premium, setPremium] = useState(1);
   const [step, setStep] = useState<string | null>(null);
-  const [result, setResult] = useState<{ ok: boolean; text: string; hash?: string } | null>(null);
+  const [result, setResult] = useState<{ ok: boolean; text: string; hash?: string; pending?: boolean } | null>(null);
+  /** A USDG order we placed and are watching for a fill. */
+  const [watch, setWatch] = useState<{ id: number; shares: bigint; since: number } | null>(null);
 
   const tokens = [...basket.components.map((c) => c.token), basket.address, USDG.address];
   const bal = useBalances(tokens, w.address, w.nonce);
@@ -81,21 +93,95 @@ export function BasketActions({ basket }: { basket: BasketInfo }) {
       return w.write({ address: basket.address, abi: basketAbi as Abi, functionName: "redeem", args: [shares, w.address] });
     }, `Redeemed ${amount} ${basket.symbol}. The stock tokens are in your wallet.`);
 
-  const buy = () =>
-    run(async () => {
+  async function buy() {
+    setResult(null);
+    setWatch(null);
+    try {
       await ensureAllowances(w.write, w.address!, DEPLOYMENT.desk, [{ token: USDG.address, amount: usdgRaw, label: "USDG" }], setStep);
       setStep("Placing the order");
       const expiry = BigInt(Math.floor(Date.now() / 1000) + 24 * 3600);
-      return w.write({
+      const hash = await w.write({
         address: DEPLOYMENT.desk,
         abi: creationDeskAbi as Abi,
         functionName: "placeOrder",
         args: [basket.address, shares, usdgRaw, expiry],
       });
-    }, `Order placed. ${quantity(usdgCost, 2)} USDG is in escrow until someone fills it or you cancel.`);
+      const receipt = await publicClient.getTransactionReceipt({ hash });
+      const [placed] = parseEventLogs({ abi: creationDeskAbi, eventName: "OrderPlaced", logs: receipt.logs });
+      const id = placed ? Number(placed.args.id) : null;
+      setResult({
+        ok: true,
+        pending: id !== null,
+        hash,
+        text: `Order${id !== null ? ` #${id}` : ""} placed. ${quantity(usdgCost, 2)} USDG is in escrow. Waiting for a participant to deliver the stocks…`,
+      });
+      if (id !== null) setWatch({ id, shares, since: Date.now() });
+    } catch (e) {
+      setResult({ ok: false, text: explain(e) });
+    } finally {
+      setStep(null);
+    }
+  }
+
+  // Nudge Tessera's participant, then watch the order until it is filled.
+  useEffect(() => {
+    if (!watch) return;
+    let alive = true;
+    let fillHash: string | undefined;
+    const { id, shares: ordered, since } = watch;
+    const deliveredText = (filler: string) =>
+      `Filled by ${who(filler)}. ${quantity(tokenAmount(ordered - (ordered * BigInt(basket.feeBps)) / 10_000n), 4)} ${basket.symbol} is in your wallet and your USDG paid for the stocks.`;
+
+    fetch("/api/participant", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id }) })
+      .then((r) => r.json())
+      .then((j: { filled?: { id: number; hash: string }[]; skipped?: { id: number; reason: string }[] }) => {
+        if (!alive) return;
+        fillHash = j.filled?.find((f) => f.id === id)?.hash;
+        const skip = j.skipped?.find((f) => f.id === id);
+        if (skip && !fillHash)
+          setResult((r) => r && { ...r, text: `Order #${id} is open. The house participant passed (${skip.reason}); anyone holding the stocks can still fill it from the desk below.` });
+      })
+      .catch(() => {});
+
+    const tick = async () => {
+      try {
+        const o = await publicClient.readContract({ address: DEPLOYMENT.desk, abi: creationDeskAbi, functionName: "getOrder", args: [BigInt(id)] });
+        if (!alive) return;
+        if (Number(o.status) === 2) {
+          setResult({ ok: true, text: deliveredText(o.filler), hash: fillHash });
+          setWatch(null);
+          w.refresh();
+          // The RPC's read replicas can lag the receipt by a block or two.
+          setTimeout(() => w.refresh(), 4000);
+          return;
+        }
+        if (Number(o.status) === 3) {
+          setResult({ ok: true, text: `Order #${id} was cancelled and the USDG returned.` });
+          setWatch(null);
+          w.refresh();
+          return;
+        }
+      } catch {
+        /* keep polling */
+      }
+      if (Date.now() - since > 150_000) {
+        setResult((r) => r && { ...r, pending: false, text: `Order #${id} is still open. It stays on the desk for 24 hours; cancel any time for a full refund.` });
+        setWatch(null);
+        return;
+      }
+      if (alive) timer = setTimeout(tick, 2500);
+    };
+    let timer = setTimeout(tick, 2500);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watch]);
 
   const disabled = !w.address || shares === 0n || step !== null;
   let reason: string | null = null;
+  if (w.address && amount.trim() && shares === 0n) reason = "Enter a positive number of shares, like 0.5.";
   if (w.address && shares > 0n) {
     if (tab === "mint" && short.length) reason = `You need more ${short.map((s) => s.c.stock?.symbol).join(", ")}. Use Get test tokens in the wallet menu, or buy with USDG instead.`;
     if (tab === "redeem" && shares > held) reason = `You hold ${quantity(tokenAmount(held), 4)} ${basket.symbol}.`;
@@ -131,6 +217,7 @@ export function BasketActions({ basket }: { basket: BasketInfo }) {
       </div>
 
       <div className="p-5">
+        <p className="mb-4 text-xs leading-relaxed text-ivory-faint">{HINTS[tab](basket.components.length)}</p>
         <label className="block">
           <span className="flex justify-between text-sm text-ivory">
             Shares
@@ -227,7 +314,7 @@ export function BasketActions({ basket }: { basket: BasketInfo }) {
           </p>
         )}
 
-        {reason && !result?.ok && <p className="mt-4 text-sm text-loss">{reason}</p>}
+        {reason && !result?.ok && <p className="mt-4 break-words text-sm text-loss">{reason}</p>}
 
         <button
           id="action-submit"
@@ -247,7 +334,8 @@ export function BasketActions({ basket }: { basket: BasketInfo }) {
         </button>
 
         {result && (
-          <p className={`mt-4 text-sm ${result.ok ? "text-gain" : "text-loss"}`} role="status">
+          <p className={`mt-4 break-words text-sm ${result.ok ? "text-gain" : "text-loss"}`} role="status">
+            {result.pending && <span className="live-dot mr-2 inline-block size-1.5 rounded-full bg-gain align-middle" aria-hidden />}
             {result.text}{" "}
             {result.hash && (
               <a href={explorerTx(result.hash)} target="_blank" rel="noreferrer" className="underline decoration-rule-bright underline-offset-4 hover:text-ivory">

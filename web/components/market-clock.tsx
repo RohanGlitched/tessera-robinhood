@@ -99,8 +99,9 @@ export function MarketClock({ compact = false }: { compact?: boolean }) {
           No session, no holidays, no bell
         </p>
         <p className="mt-4 text-sm text-ivory-dim">
-          Mints and redeems in about{" "}
-          <span className="tnum text-ivory">250ms</span>
+          A new block about every{" "}
+          <span className="tnum text-ivory">250ms</span>, gas at{" "}
+          <span className="tnum text-ivory">0.01 gwei</span>
         </p>
       </div>
     </div>

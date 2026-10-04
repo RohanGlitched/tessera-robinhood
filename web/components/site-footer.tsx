@@ -29,6 +29,12 @@ export function SiteFooter() {
             <Link href="/method" className="text-ivory-dim hover:text-ivory">
               How it works
             </Link>
+            <a href="https://github.com/RohanGlitched/tessera-robinhood" target="_blank" rel="noreferrer" className="text-ivory-dim hover:text-ivory">
+              Source on GitHub
+            </a>
+            <a href="https://github.com/RohanGlitched/tessera-robinhood/blob/main/contracts/SECURITY.md" target="_blank" rel="noreferrer" className="text-ivory-dim hover:text-ivory">
+              Security notes
+            </a>
             {IS_DEPLOYED && (
               <>
                 <a

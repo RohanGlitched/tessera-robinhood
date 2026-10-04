@@ -13,6 +13,9 @@ import { USDG } from "@/lib/tokens";
 
 const STATUS = ["", "Open", "Filled", "Cancelled"];
 
+/** The project's own participant gets a name; everyone else their address. */
+export const who = (a: string) => (a.toLowerCase() === DEPLOYMENT.deployer.toLowerCase() ? "the house participant" : shortAddress(a, 6, 4));
+
 /**
  * Creation desk orders. Anyone holding the components can fill an open order;
  * the buyer, or anyone once it expires, can cancel it.
@@ -101,7 +104,7 @@ export function OrdersTable({
               <p className="tnum mt-1 text-xs text-ivory-faint">
                 #{o.id} by {shortAddress(o.buyer, 6, 4)}
                 {open ? ` · expires ${timeAgo(o.expiry)}` : ""}
-                {o.status === 2 ? ` · filled by ${shortAddress(o.filler, 6, 4)}` : ""}
+                {o.status === 2 ? ` · filled by ${who(o.filler)}` : ""}
               </p>
               {busy?.id === o.id ? (
                 <p className="mt-3 text-xs text-ivory-dim">{busy.step}…</p>
@@ -114,7 +117,7 @@ export function OrdersTable({
                   )}
                   {(mine || expired) && (
                     <button onClick={() => cancel(o)} className="flex-1 border border-rule-bright px-3 py-2.5 text-sm text-ivory-dim">
-                      Cancel
+                      {mine ? "Cancel and refund" : "Return escrow to buyer"}
                     </button>
                   )}
                 </div>
@@ -164,7 +167,7 @@ export function OrdersTable({
                       <span className="block text-xs text-ivory-faint">expires {timeAgo(o.expiry)}</span>
                     )}
                     {o.status === 2 && (
-                      <span className="tnum block text-xs text-ivory-faint">by {shortAddress(o.filler, 6, 4)}</span>
+                      <span className="tnum block text-xs text-ivory-faint">by {who(o.filler)}</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-right">
@@ -179,7 +182,7 @@ export function OrdersTable({
                         )}
                         {(mine || expired) && (
                           <button onClick={() => cancel(o)} className="border border-rule-bright px-3 py-1.5 text-xs text-ivory-dim hover:text-ivory">
-                            Cancel
+                            {mine ? "Cancel and refund" : "Return escrow to buyer"}
                           </button>
                         )}
                       </div>

@@ -14,6 +14,7 @@ import {
   createWalletClient,
   custom,
   http,
+  parseEther,
   type Abi,
   type Address,
   type Hash,
@@ -21,6 +22,7 @@ import {
 } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { publicClient, robinhoodTestnet } from "@/lib/chain";
+import { requestTestTokens } from "@/lib/faucet";
 
 type Mode = "injected" | "test";
 
@@ -198,6 +200,12 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     async ({ address: to, abi, functionName, args }) => {
       if (!client || !address) throw new Error("Connect a wallet first.");
       if (mode === "injected") await ensureChain();
+      if (mode === "test") {
+        // A fresh test wallet has no gas. Top it up from the faucet rather
+        // than fail the first thing a visitor tries.
+        const gas = await publicClient.getBalance({ address }).catch(() => null);
+        if (gas !== null && gas < parseEther("0.00005")) await requestTestTokens(address).catch(() => {});
+      }
       const { request } = await publicClient.simulateContract({
         account: address,
         address: to,
@@ -208,6 +216,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       const hash = await client.writeContract({ ...(request as object), account: client.account!, chain: robinhoodTestnet } as never);
       await publicClient.waitForTransactionReceipt({ hash });
       setNonce((n) => n + 1);
+      // Read replicas behind the public RPC can lag the receipt by a block; read once more.
+      setTimeout(() => setNonce((n) => n + 1), 3000);
       return hash;
     },
     [client, address, mode],

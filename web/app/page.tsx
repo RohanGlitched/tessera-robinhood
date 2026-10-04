@@ -7,6 +7,7 @@ import { MarketClock } from "@/components/market-clock";
 import { FlowDiagram } from "@/components/flow-diagram";
 import { usePrices } from "@/components/prices";
 import { Ticker } from "@/components/ticker";
+import { QuickStart } from "@/components/quick-start";
 import { featuredOrder, useBaskets, vaultValue } from "@/lib/baskets";
 import { moneyCompact } from "@/lib/format";
 
@@ -30,15 +31,16 @@ export default function Home() {
           </h1>
           <p className="rise mt-6 max-w-[52ch] text-[1.07rem] leading-relaxed text-ivory-dim" style={rise(2)}>
             Tessera turns Robinhood Stock Tokens into baskets anyone can launch. Pick up to eight
-            stocks, set the weights, and publish them as one token, backed share for share by the
+            stocks (five are live on the testnet today), set the weights, and publish them as one token, backed share for share by the
             real stock tokens in a vault on Robinhood Chain. No stock tokens? Buy any basket with
             USDG.
           </p>
-          <div className="rise mt-8 flex flex-wrap gap-3" style={rise(3)}>
-            <Link href="/compose" className="bg-gold px-5 py-3 text-sm font-medium text-ground-deep hover:brightness-110">
+          <div className="rise mt-8 flex flex-wrap items-stretch gap-3" style={rise(3)}>
+            <QuickStart />
+            <Link href="/compose" className="inline-flex items-center bg-gold px-5 py-3 text-sm font-medium text-ground-deep hover:brightness-110">
               Create a basket
             </Link>
-            <Link href="/explore" className="border border-rule-bright px-5 py-3 text-sm text-ivory hover:border-ivory-faint">
+            <Link href="/explore" className="inline-flex items-center border border-rule-bright px-5 py-3 text-sm text-ivory hover:border-ivory-faint">
               Explore baskets
             </Link>
           </div>

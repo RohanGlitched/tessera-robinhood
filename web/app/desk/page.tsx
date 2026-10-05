@@ -3,6 +3,7 @@
 import { OrdersTable } from "@/components/orders-table";
 import { useWallet } from "@/components/wallet";
 import { useBaskets, useOrders } from "@/lib/baskets";
+import { MosaicBand } from "@/components/mosaic-band";
 
 export default function Desk() {
   const w = useWallet();
@@ -19,6 +20,7 @@ export default function Desk() {
         how an ETF&apos;s authorised participants work, open to everyone and settled on Robinhood
         Chain.
       </p>
+      <MosaicBand className="mt-8" />
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <p className="tnum text-sm text-ivory-faint">{open} open {open === 1 ? "order" : "orders"}</p>
         <p className="flex items-center gap-2 text-xs text-ivory-faint">

@@ -8,6 +8,10 @@ import { FlowDiagram } from "@/components/flow-diagram";
 import { usePrices } from "@/components/prices";
 import { Ticker } from "@/components/ticker";
 import { QuickStart } from "@/components/quick-start";
+import { MosaicBand } from "@/components/mosaic-band";
+import { Anatomy } from "@/components/home-anatomy";
+import { Contracts, Guarantees } from "@/components/home-contracts";
+import { DeskLive } from "@/components/home-desk";
 import { featuredOrder, useBaskets, vaultValue } from "@/lib/baskets";
 import { moneyCompact } from "@/lib/format";
 
@@ -96,7 +100,35 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto mt-28 grid max-w-[1400px] items-center gap-10 px-5 sm:px-8 lg:grid-cols-[1fr_1.1fr]">
+      <div className="mx-auto mt-28 max-w-[1400px] px-5 sm:px-8">
+        <MosaicBand />
+      </div>
+
+      <section className="mx-auto mt-20 max-w-[1400px] px-5 sm:px-8">
+        <Anatomy />
+      </section>
+
+      <div className="mx-auto mt-24 max-w-[1400px] px-5 sm:px-8">
+        <MosaicBand />
+      </div>
+
+      <section className="mx-auto mt-20 max-w-[1400px] px-5 sm:px-8">
+        <Contracts />
+      </section>
+
+      <section className="mx-auto mt-24 max-w-[1400px] border-t border-rule px-5 pt-20 sm:px-8">
+        <Guarantees />
+      </section>
+
+      <div className="mx-auto mt-24 max-w-[1400px] px-5 sm:px-8">
+        <MosaicBand />
+      </div>
+
+      <section className="mx-auto mt-20 max-w-[1400px] px-5 sm:px-8">
+        <DeskLive />
+      </section>
+
+      <section className="mx-auto mt-28 grid max-w-[1400px] items-center gap-10 border-t border-rule px-5 pt-20 sm:px-8 lg:grid-cols-[1fr_1.1fr]">
         <div>
           <h2 className="display text-title text-ivory">The exchange keeps hours. The chain does not.</h2>
           <p className="mt-3 max-w-[54ch] leading-relaxed text-ivory-dim">
@@ -106,6 +138,28 @@ export default function Home() {
           </p>
         </div>
         <MarketClock />
+      </section>
+
+      <div className="mx-auto mt-28 max-w-[1400px] px-5 sm:px-8">
+        <MosaicBand />
+      </div>
+
+      <section className="mx-auto mt-20 max-w-[1400px] px-5 sm:px-8">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          <div className="max-w-[46ch]">
+            <h2 className="display text-title text-ivory">One minute, three transactions, nothing to install.</h2>
+            <p className="mt-4 text-base leading-relaxed text-ivory-dim">
+              A throwaway key is made in your browser and the faucet sends it test ETH, a little of each stock token and some USDG. You land on
+              the Robinhood Five basket: mint a share in kind, buy one with USDG and watch the house participant fill it, then redeem.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <QuickStart />
+            <Link href="/method" className="inline-flex items-center border border-rule-bright px-5 py-3 text-sm text-ivory hover:border-ivory-faint">
+              How it works
+            </Link>
+          </div>
+        </div>
       </section>
     </>
   );

@@ -6,6 +6,7 @@ import { usePrices } from "@/components/prices";
 import { featuredOrder, useBaskets, vaultValue } from "@/lib/baskets";
 import { DEPLOYMENT } from "@/lib/chain";
 import { moneyCompact } from "@/lib/format";
+import { MosaicBand } from "@/components/mosaic-band";
 
 export default function Explore() {
   const { baskets, error } = useBaskets();
@@ -40,7 +41,8 @@ export default function Explore() {
         </dl>
       </div>
       {error && <p className="mt-8 border border-loss/40 p-4 text-sm text-ivory">Could not read the factory: {error}</p>}
-      <div className="mt-10 border-t border-rule pt-10">
+      <MosaicBand className="mt-10" />
+      <div className="mt-10">
         <div className="flex flex-wrap items-baseline justify-between gap-4">
           <h2 className="display text-2xl text-ivory">Featured</h2>
           <p className="text-sm text-ivory-faint">Published at launch, sized at $10 a share from live quotes.</p>

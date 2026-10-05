@@ -24,13 +24,17 @@ export default function Home() {
 
   return (
     <>
-      <section className="mx-auto grid max-w-[1400px] items-start gap-12 px-5 pt-12 sm:px-8 sm:pt-16 lg:grid-cols-[0.82fr_1fr] lg:gap-14">
-        <div className="min-w-0 lg:pt-6">
-          <p className="rise inline-flex items-center gap-2 border border-rule-bright px-3 py-1.5 text-xs text-ivory-dim" style={rise(0)}>
-            <span className="live-dot size-1.5 rounded-full bg-gain" aria-hidden />
-            Live on Robinhood Chain testnet
-          </p>
-          <h1 className="display rise mt-7 text-[clamp(2.6rem,5.2vw,4.6rem)] text-ivory" style={rise(1)}>
+      {/* The two columns share one top line (the badge row and the mosaic's caption are the same height) and,
+          on wide screens, one bottom line: the mosaic fills whatever height the copy takes. */}
+      <section className="mx-auto grid max-w-[1400px] items-start gap-12 px-5 pt-12 sm:px-8 sm:pt-16 lg:grid-cols-[0.82fr_1fr] lg:items-stretch lg:gap-14">
+        <div className="min-w-0">
+          <div className="flex min-h-9 items-center">
+            <p className="rise inline-flex items-center gap-2 border border-rule-bright px-3 py-1.5 text-xs text-ivory-dim" style={rise(0)}>
+              <span className="live-dot size-1.5 rounded-full bg-gain" aria-hidden />
+              Live on Robinhood Chain testnet
+            </p>
+          </div>
+          <h1 className="display rise mt-4 text-[clamp(2.6rem,5.2vw,4.6rem)] text-ivory" style={rise(1)}>
             An index fund is a list of companies and a set of weights.
           </h1>
           <p className="rise mt-6 max-w-[52ch] text-[1.07rem] leading-relaxed text-ivory-dim" style={rise(2)}>
@@ -63,8 +67,8 @@ export default function Home() {
             ))}
           </dl>
         </div>
-        <div className="rise min-w-0" style={rise(2)}>
-          <MarketMosaic height={430} />
+        <div className="rise flex min-w-0 flex-col" style={rise(2)}>
+          <MarketMosaic height={430} fill />
         </div>
       </section>
 
